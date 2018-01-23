@@ -1,5 +1,7 @@
 global start
 
+extern long_mode_start
+
 section .bss
 align 4096
 p4_table:
@@ -12,6 +14,18 @@ stack_bottom:
     resb 64
 stack_top:
 
+
+section .rodata
+gdt64:
+    dq 0
+.code: equ $ - gdt64
+    dq  (1<<41) | (1<<44) | (1<<47) | (1<<43) | (1<<53)
+.data: equ $ - gdt64
+    dq (1<<44) | (1<<47) | (1<<41)
+.pointer:
+    dw $ - gdt64 - 1
+    dq gdt64
+
 section .text
 bits 32
 start:
@@ -21,6 +35,9 @@ start:
 
     call set_up_page_tables
     call enable_paging
+
+    lgdt [gdt64.pointer]
+    jmp gdt64.code:long_mode_start
 
     ; print `Hello` to screen
     mov WORD [0xb8000], 0x1f48
