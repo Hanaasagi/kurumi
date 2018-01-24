@@ -6,5 +6,15 @@ authors = ["Hanaasagi <ambiguous404@gmail.com>"]
 [lib]
 crate-type = ["staticlib"]
 
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
 [dependencies]
 rlibc = "1.0"
+
+[dependencies.vga]
+path = "vga"
+# features = ["kprint"]

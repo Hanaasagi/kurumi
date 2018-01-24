@@ -11,6 +11,7 @@ extern fn rust_begin_panic() -> ! {
 }
 
 extern crate rlibc;
+extern crate vga;
 
 #[no_mangle]
 pub extern fn kmain() -> ! {
@@ -18,7 +19,7 @@ pub extern fn kmain() -> ! {
     // clear screen
     let mut buffer = [0x1fu8; 80*50];
     for i in 0..(80*25) {
-        buffer[i*2] = 0x20u8;
+        buffer[i*2] = 0x00u8;
     }
     let buffer_ptr = (0xb8000) as *mut _;
     unsafe { *buffer_ptr = buffer};
@@ -33,5 +34,6 @@ pub extern fn kmain() -> ! {
     let buffer_ptr = (0xb8000) as *mut _;
     unsafe { *buffer_ptr = prompt_buf };
 
+    vga::print_something();
     loop {}
 }

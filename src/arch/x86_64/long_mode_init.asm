@@ -1,5 +1,6 @@
 global long_mode_start
 
+extern kmain
 
 section .text
 bits 64
@@ -11,7 +12,6 @@ long_mode_start:
     mov fs, ax
     mov gs, ax
 
-    extern kmain
     jmp kmain
 
     ; print `OKAY` to screen
