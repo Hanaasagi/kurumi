@@ -1,0 +1,10 @@
+[package]
+name = "kurumi"
+version = "0.1.0"
+authors = ["Hanaasagi <ambiguous404@gmail.com>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1.0"

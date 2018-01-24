@@ -12,3 +12,7 @@ Cargo.lock
 **/*.rs.bk
 
 /build/
+
+/target/
+**/*.rs.bk
+Cargo.lock
