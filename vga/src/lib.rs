@@ -5,6 +5,10 @@
 #![feature(const_unique_new)]
 #![feature(ptr_internals)]
 
+extern crate spin;
+use spin::Mutex;
+
+use core::fmt;
 
 #[allow(dead_code)]
 #[repr(u8)]
@@ -37,6 +41,7 @@ impl ColorCode {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 struct ScreenChar {
     ascii_char: u8,
     color_code: ColorCode,
@@ -55,6 +60,15 @@ pub struct Writer {
     column_position: usize,
     color_code: ColorCode,
     buffer: Unique<Buffer>,
+}
+
+impl fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+          self.write_byte(byte)
+        }
+        Ok(())
+    }
 }
 
 impl Writer {
@@ -84,16 +98,63 @@ impl Writer {
     }
 
     fn new_line(&mut self) {
+        for row in 1..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
+                let buffer = self.buffer();
+                let character = buffer.chars[row][col];
+                buffer.chars[row - 1][col] = character;
+            }
+        }
+        self.clear_row(BUFFER_HEIGHT-1);
+        self.column_position = 0;
+    }
 
+    fn clear_row(&mut self, row: usize) {
+        let blank = ScreenChar {
+            ascii_char: b' ',
+            color_code: self.color_code,
+        };
+        for col in 0..BUFFER_WIDTH {
+            self.buffer().chars[row][col] = blank.clone();
+        }
+    }
+
+    pub fn write_str(&mut self, s: &str) {
+        for byte in s.bytes() {
+          self.write_byte(byte)
+        }
+    }
+
+}
+
+pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::White, Color::Blue),
+    buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
+});
+
+
+#[macro_export]
+macro_rules! kprint {
+    ($($arg:tt)*) => ({
+        $crate::kprint(format_args!($($arg)*));
+    });
+}
+
+#[macro_export]
+macro_rules! kprintln {
+    ($fmt:expr) => (kprint!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => (kprint!(concat!($fmt, "\n"), $($arg)*));
+}
+
+
+pub fn clear_screen() {
+    for _ in 0..BUFFER_HEIGHT {
+        kprintln!("");
     }
 }
 
-pub fn print_something() {
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::LightGreen, Color::Black),
-        buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
-    };
-
-    writer.write_byte(b'H');
+pub fn kprint(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }
