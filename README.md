@@ -1,4 +1,6 @@
-# kurumi
+# kurumi (くるみ)
+
+kurumi is a toy os implemented in Rust. It is an experimental project.
 
 ### Reference
 [Linux内核设计与实现](https://book.douban.com/subject/6097773/)  
