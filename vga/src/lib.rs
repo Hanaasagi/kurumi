@@ -115,16 +115,9 @@ impl Writer {
             color_code: self.color_code,
         };
         for col in 0..BUFFER_WIDTH {
-            self.buffer().chars[row][col] = blank.clone();
+            self.buffer().chars[row][col] = blank;
         }
     }
-
-    pub fn write_str(&mut self, s: &str) {
-        for byte in s.bytes() {
-          self.write_byte(byte)
-        }
-    }
-
 }
 
 pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
