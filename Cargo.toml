@@ -17,3 +17,6 @@ rlibc = "1.0"
 
 [dependencies.vga]
 path = "vga"
+
+[dependencies.drivers]
+path = "drivers"
