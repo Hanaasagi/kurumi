@@ -24,6 +24,8 @@ pub fn remap() {
         let a1 = inb(PIC1_DATA);
         let a2 = inb(PIC2_DATA);
 
+        let offset1: u8 = 0x20;
+        let offset2: u8 = 0x28;
         outb(PIC1_COMMAND, ICW1_INIT+ICW1_ICW4);  // starts the initialization sequence (in cascade mode)
         io_wait();
         outb(PIC2_COMMAND, ICW1_INIT+ICW1_ICW4);
@@ -46,5 +48,18 @@ pub fn remap() {
         // restore saved masks.
         outb(PIC1_DATA, a1);
         outb(PIC2_DATA, a2);
+    }
+}
+
+// End-of-interrupt command code
+const PIC_EOI: u16 = 0x20;
+
+pub fn send_eoi(interrupt_number: isize) {
+    // TODO
+    unsafe {
+    if interrupt_number >= 8 {
+        outb(PIC2_COMMAND,PIC_EOI);
+    }
+    outb(PIC1_COMMAND,PIC_EOI);
     }
 }
