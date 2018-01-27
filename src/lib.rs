@@ -16,8 +16,8 @@ extern crate rlibc;
 #[macro_use]
 extern crate vga;
 
-extern crate drivers;
-use drivers::pic;
+extern crate device;
+use device::pic;
 
 #[no_mangle]
 pub extern fn kmain() -> ! {
