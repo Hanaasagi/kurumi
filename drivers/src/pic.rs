@@ -1,17 +1,28 @@
+#![allow(dead_code)]
+
+use io::{inb, outb, io_wait};
+
 // reinitialize the PIC controllers, giving them specified vector offsets
 // rather than 8h and 70h, as configured by default
+//
+const  PIC1: u16         = 0x20;          // IO base address for master PIC
+const  PIC2: u16         = 0xA0;          // IO base address for slave PIC
+const  PIC1_COMMAND: u16 = PIC1;
+const  PIC1_DATA: u16    = (PIC1+1);
+const  PIC2_COMMAND: u16 = PIC2;
+const  PIC2_DATA: u16    = (PIC2+1);
 
-const ICW1_ICW4: u16       = 0x01        // ICW4 (not) needed
-const ICW1_SINGL: u16      = 0x02        // Single (cascade) mode
-const ICW1_INTERVAL4: u16  = 0x04        // Call address interval 4 (8)
-const ICW1_LEVEL: u16      = 0x08        // Level triggered (edge) mode
-const ICW1_INIT: u16       = 0x10        // Initialization - required!
+const ICW1_ICW4: u8       = 0x01;       // ICW4 (not) needed
+const ICW1_SINGL: u8      = 0x02;       // Single (cascade) mode
+const ICW1_INTERVAL4: u8  = 0x04;       // Call address interval 4 (8)
+const ICW1_LEVEL: u8      = 0x08;       // Level triggered (edge) mode
+const ICW1_INIT: u8       = 0x10;       // Initialization - required!
 
-const ICW4_8086: u16       = 0x01        // 8086/88 (MCS-80/85) mode
-const ICW4_AUTO: u16       = 0x02        // Auto (normal) EOI
-const ICW4_BUF_SLAVE: u16  = 0x08        // Buffered mode/slave
-const ICW4_BUF_MASTER: u16 = 0x0C        // Buffered mode/master
-const ICW4_SFNM: u16       = 0x10        // Special fully nested (not)
+const ICW4_8086: u8       = 0x01;       // 8086/88 (MCS-80/85) mode
+const ICW4_AUTO: u8       = 0x02;       // Auto (normal) EOI
+const ICW4_BUF_SLAVE: u8  = 0x08;       // Buffered mode/slave
+const ICW4_BUF_MASTER: u8 = 0x0C;       // Buffered mode/master
+const ICW4_SFNM: u8       = 0x10;       // Special fully nested (not)
 
 // arguments:
 //     offset1 - vector offset for master PIC
@@ -52,14 +63,12 @@ pub fn remap() {
 }
 
 // End-of-interrupt command code
-const PIC_EOI: u16 = 0x20;
+const PIC_EOI: u8 = 0x20;
 
 pub fn send_eoi(interrupt_number: isize) {
     // TODO
-    unsafe {
     if interrupt_number >= 8 {
-        outb(PIC2_COMMAND,PIC_EOI);
+        unsafe { outb(PIC2_COMMAND,PIC_EOI); }
     }
-    outb(PIC1_COMMAND,PIC_EOI);
-    }
+    unsafe {outb(PIC1_COMMAND,PIC_EOI); }
 }

@@ -16,9 +16,14 @@ extern crate rlibc;
 #[macro_use]
 extern crate vga;
 
+extern crate drivers;
+use drivers::pic;
+
 #[no_mangle]
 pub extern fn kmain() -> ! {
+    pic::remap();
     vga::clear_screen();
     kprintln!("Welcome to Japari Park");
+    kprintln!("{}", "test format");
     loop {}
 }

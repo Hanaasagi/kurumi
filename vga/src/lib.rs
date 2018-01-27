@@ -8,7 +8,7 @@
 extern crate spin;
 use spin::Mutex;
 
-use core::fmt;
+use core::fmt::{self, Write};
 
 #[allow(dead_code)]
 #[repr(u8)]
@@ -148,6 +148,5 @@ pub fn clear_screen() {
 }
 
 pub fn kprint(args: fmt::Arguments) {
-    use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
