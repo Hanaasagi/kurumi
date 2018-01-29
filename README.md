@@ -2,6 +2,8 @@
 
 kurumi is a toy os implemented in Rust. It is an experimental project.
 
+![Imgur](https://i.imgur.com/seoYuqw.gif)
+
 ### Reference
 [Linux内核设计与实现](https://book.douban.com/subject/6097773/)  
 [30天自制操作系统](https://book.douban.com/subject/11530329/)  
