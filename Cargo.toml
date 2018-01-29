@@ -14,6 +14,8 @@ panic = "abort"
 
 [dependencies]
 rlibc = "1.0"
+x86 = "0.8.1"
+interrupts = { path = "interrupts" }
 
 [dependencies.vga]
 path = "vga"

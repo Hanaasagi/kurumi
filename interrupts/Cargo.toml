@@ -1,0 +1,10 @@
+[package]
+name = "interrupts"
+version = "0.1.0"
+authors = ["The intermezzOS team"]
+
+[dependencies]
+spin = "0.4.4"
+bitflags = "1"
+device = { path = "../device" }
+vga = { path = "../vga" }
