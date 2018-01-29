@@ -2,30 +2,18 @@
 #![feature(asm)]
 #![feature(lang_items)]
 
-#[lang = "eh_personality"]
-#[no_mangle]
-pub extern fn eh_personality() {
-}
-
-#[lang = "panic_fmt"]
-#[no_mangle]
-pub extern fn rust_begin_panic() -> ! {
-    loop {}
-}
-
-extern crate rlibc;
 #[macro_use]
 extern crate vga;
-
-extern crate device;
-use device::pic;
-
 extern crate interrupts;
+extern crate device;
+extern crate rlibc;
+
+use device::pic;
 
 #[no_mangle]
 pub extern fn kmain() -> ! {
     vga::clear_screen();
-    kprintln!("booting ...");
+    kprintln!("Booting ...");
     pic::remap();                   kprintln!("PIC INIT        {:>64}", "[ok]");
     interrupts::init();             kprintln!("INTERRUPT INIT  {:>64}", "[ok]");
     kprintln!(r"
@@ -38,3 +26,15 @@ pub extern fn kmain() -> ! {
     kprint!("$ ");
     loop {}
 }
+
+#[lang = "eh_personality"]
+#[no_mangle]
+pub extern fn eh_personality() {
+}
+
+#[lang = "panic_fmt"]
+#[no_mangle]
+pub extern fn rust_begin_panic() -> ! {
+    loop {}
+}
+

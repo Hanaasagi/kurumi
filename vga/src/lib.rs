@@ -1,14 +1,14 @@
 #![no_std]
-
 #![feature(const_fn)]
 #![feature(unique)]
 #![feature(const_unique_new)]
 #![feature(ptr_internals)]
 
 extern crate spin;
-use spin::Mutex;
 
+use spin::Mutex;
 use core::fmt::{self, Write};
+use core::ptr::Unique;
 
 #[allow(dead_code)]
 #[repr(u8)]
@@ -53,8 +53,6 @@ const BUFFER_WIDTH: usize = 80;
 struct Buffer {
     chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT]
 }
-
-use core::ptr::Unique;
 
 pub struct Writer {
     column_position: usize,

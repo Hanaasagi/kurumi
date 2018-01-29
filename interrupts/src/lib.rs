@@ -4,27 +4,27 @@
 #![feature(const_fn)]
 #![feature(core_intrinsics)]
 
-extern crate spin;
 #[macro_use]
 extern crate bitflags;
+extern crate spin;
 
-mod dtables;
+#[macro_use]
+extern crate vga;
+extern crate device;
+
 pub mod idt;
+mod dtables;
 
 use spin::Mutex;
+use core::intrinsics;
+
 use dtables::DescriptorTablePointer;
 use idt::IdtEntry;
-
-extern crate device;
 use device::pic;
 use device::keyboard;
 use device::io::inb;
 
-use core::intrinsics;
-
-#[macro_use]
-extern crate vga;
-
+#[macro_export]
 macro_rules! scratch_push {
     () => (asm!(
         "push rax
@@ -40,6 +40,7 @@ macro_rules! scratch_push {
     ));
 }
 
+#[macro_export]
 macro_rules! scratch_pop {
     () => (asm!(
         "pop r11
@@ -55,6 +56,7 @@ macro_rules! scratch_pop {
     ));
 }
 
+#[macro_export]
 macro_rules! preserved_push {
     () => (asm!(
         "push rbx
@@ -67,6 +69,7 @@ macro_rules! preserved_push {
     ));
 }
 
+#[macro_export]
 macro_rules! preserved_pop {
     () => (asm!(
         "pop r15
@@ -80,6 +83,7 @@ macro_rules! preserved_pop {
 }
 
 
+#[macro_export]
 macro_rules! iret {
     () => (asm!(
         "iretq"
