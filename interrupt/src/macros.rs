@@ -1,29 +1,3 @@
-#![no_std]
-#![feature(asm)]
-#![feature(naked_functions)]
-#![feature(const_fn)]
-#![feature(core_intrinsics)]
-
-#[macro_use]
-extern crate bitflags;
-extern crate spin;
-
-#[macro_use]
-extern crate vga;
-extern crate device;
-
-pub mod idt;
-mod dtables;
-
-use spin::Mutex;
-use core::intrinsics;
-
-use dtables::DescriptorTablePointer;
-use idt::IdtEntry;
-use device::pic;
-use device::keyboard;
-use device::io::inb;
-
 #[macro_export]
 macro_rules! scratch_push {
     () => (asm!(
@@ -92,14 +66,15 @@ macro_rules! iret {
 }
 
 #[macro_export]
-macro_rules! make_idt_entry {
-    ($index:expr, $name:ident, $body:expr) => {{
-        fn body() {
-            $body
-        }
+macro_rules! interrupt {
+    ($name:ident, $body:expr) => {
 
         #[naked]
         unsafe extern fn $name() {
+            fn body() {
+                $body
+            }
+
             scratch_push!();
             preserved_push!();
             asm!("mov rsi, rsp
@@ -118,45 +93,5 @@ macro_rules! make_idt_entry {
 
             intrinsics::unreachable();
         }
-
-        IDT.lock()[$index].set_func($name as usize);
-    }};
-}
-
-// The Interrupt Descriptor Table
-// The CPU will look at this table to find the appropriate interrupt handler.
-pub  static IDT: Mutex<[IdtEntry; 256]> = Mutex::new([IdtEntry::new(); 256]);
-
-// Enable Interrupts.
-pub unsafe fn enable() {
-    asm!("sti");
-}
-
-// Disable Interrupts.
-pub unsafe fn disable() {
-    asm!("cli");
-}
-
-pub fn init() {
-
-    let ptr: DescriptorTablePointer =
-        DescriptorTablePointer::new_idtp(&IDT.lock()[..]);
-
-    unsafe { dtables::lidt(&ptr) };
-
-    make_idt_entry!(32, isr32, {
-        pic::send_eoi(32);
-    });
-
-    make_idt_entry!(33, isr33, {
-        let scancode = unsafe { inb(0x60) };
-
-        if let Some(c) = keyboard::from_scancode(scancode as usize) {
-            kprint!("{}", c);
-        }
-
-        pic::send_eoi(33);
-    });
-
-    unsafe { enable(); }
+    };
 }

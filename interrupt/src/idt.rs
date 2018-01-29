@@ -50,7 +50,7 @@ impl IdtEntry {
         self.offseth = (base >> 32) as u32;
     }
 
-    pub fn set_func(&mut self, func: usize) {
+    pub fn set_func(&mut self, func: unsafe extern fn()) {
         self.set_flags(IdtFlags::PRESENT | IdtFlags::RING_0 | IdtFlags::INTERRUPT);
         self.set_offset(0x08, func as usize);
     }

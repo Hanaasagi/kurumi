@@ -1,10 +1,10 @@
-/// Decode a code in the PS/2 scan code set 1 (legacy set).
-///
-/// Difference between set 1 and sets 2 & 3:
-///   http://wiki.osdev.org/%228042%22_PS/2_Controller#Translation
-///
-/// Reference table:
-///   http://www.computer-engineering.org/ps2keyboard/scancodes1.html
+// Decode a code in the PS/2 scan code set 1 (legacy set).
+//
+// Difference between set 1 and sets 2 & 3:
+//   http://wiki.osdev.org/%228042%22_PS/2_Controller#Translation
+//
+// Reference table:
+//   http://www.computer-engineering.org/ps2keyboard/scancodes1.html
 pub fn from_scancode(code: usize) -> Option<char> {
     let printable = match code {
         0x1e => 'a',

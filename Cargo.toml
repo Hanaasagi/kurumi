@@ -5,6 +5,7 @@ authors = ["Hanaasagi <ambiguous404@gmail.com>"]
 
 [lib]
 crate-type = ["staticlib"]
+path = "src/kernel.rs"
 
 [profile.dev]
 panic = "abort"
@@ -15,8 +16,8 @@ panic = "abort"
 [dependencies]
 rlibc = "1.0"
 
-[dependencies.interrupts]
-path = "interrupts"
+[dependencies.interrupt]
+path = "interrupt"
 
 [dependencies.vga]
 path = "vga"
