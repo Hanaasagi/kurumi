@@ -66,27 +66,37 @@ macro_rules! iret {
 }
 
 #[macro_export]
+macro_rules! cli {
+    () => (asm!(
+        "cli"
+        : : : : "intel", "volatile"
+    ));
+}
+
+#[macro_export]
+macro_rules! sti {
+    () => (asm!(
+        "sti"
+        : : : : "intel", "volatile"
+    ));
+}
+
+#[macro_export]
 macro_rules! interrupt {
     ($name:ident, $body:expr) => {
 
         #[naked]
         unsafe extern fn $name() {
-            fn body() {
+            #[inline(never)]
+            fn inner() {
                 $body
             }
 
             scratch_push!();
             preserved_push!();
-            asm!("mov rsi, rsp
-                  push rsi
-
-                  cli
-
-                  call $0
-
-                  sti
-
-                  add rsp, 8" :: "s"(body as fn()) :: "volatile", "intel");
+            cli!();
+            inner();
+            sti!();
             preserved_pop!();
             scratch_pop!();
             iret!();

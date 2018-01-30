@@ -30,15 +30,6 @@ use device::io::inb;
 // The CPU will look at this table to find the appropriate interrupt handler.
 pub static IDT: Mutex<[IdtEntry; 256]> = Mutex::new([IdtEntry::new(); 256]);
 
-// Enable Interrupts.
-pub unsafe fn enable() {
-    asm!("sti");
-}
-
-// Disable Interrupts.
-pub unsafe fn disable() {
-    asm!("cli");
-}
 
 pub fn init() {
 
@@ -65,5 +56,5 @@ pub fn init() {
     IDT.lock()[32].set_func(isr32);
     IDT.lock()[33].set_func(isr33);
 
-    unsafe { enable(); }
+    unsafe { sti!() }
 }
