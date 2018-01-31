@@ -24,7 +24,6 @@ use idt::IdtEntry;
 use dtables::DescriptorTablePointer;
 use device::pic;
 use device::keyboard;
-use device::io::inb;
 
 // The Interrupt Descriptor Table
 // The CPU will look at this table to find the appropriate interrupt handler.
@@ -43,12 +42,9 @@ pub fn init() {
     });
 
     interrupt!(isr33, {
-        let scancode = unsafe { inb(0x60) };
-
-        if let Some(c) = keyboard::from_scancode(scancode as usize) {
+        if let Some(c) = keyboard::read_char() {
             kprint!("{}", c);
         }
-
         pic::send_eoi(33);
     });
 
