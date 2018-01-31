@@ -15,7 +15,7 @@ pub extern fn kmain() -> ! {
     vga::clear_screen();
     kprintln!("Booting ...");
     pic::remap();                   kprintln!("PIC INIT        {:>64}", "[ok]");
-    interrupt::init();             kprintln!("INTERRUPT INIT  {:>64}", "[ok]");
+    interrupt::init();              kprintln!("INTERRUPT INIT  {:>64}", "[ok]");
     kprintln!(r"
 | | ___   _ _ __ _   _ _ __ ___ (_)
 | |/ | | | | '__| | | | '_ ` _ \| |

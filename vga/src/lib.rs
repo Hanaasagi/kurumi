@@ -48,7 +48,7 @@ struct ScreenChar {
 }
 
 const BUFFER_HEIGHT: usize = 25;
-const BUFFER_WIDTH: usize = 80;
+const BUFFER_WIDTH:  usize = 80;
 
 struct Buffer {
     chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT]
@@ -70,6 +70,7 @@ impl fmt::Write for Writer {
 }
 
 impl Writer {
+
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
@@ -147,4 +148,13 @@ pub fn clear_screen() {
 
 pub fn kprint(args: fmt::Arguments) {
     WRITER.lock().write_fmt(args).unwrap();
+}
+
+pub fn clear_left_once() {
+    let mut writer = WRITER.lock();
+    writer.column_position -= 1;
+    // can't use kprint here
+    // otherwist cause deadlock
+    writer.write_byte(' ' as u8);
+    writer.column_position -= 1;
 }

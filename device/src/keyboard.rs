@@ -5,7 +5,7 @@ use io::inb;
 use spin::Mutex;
 
 // Scancodes range 0x01 ... 0x0E
-const ASCII_PART_1: &'static [u8; 17] = b"\x1B1234567890-=\0x02";
+const ASCII_PART_1: &'static [u8; 14] = b"\x1B1234567890-=\x08";
 // Scancodes range 0x0F ... 0x1C
 const ASCII_PART_2: &'static [u8; 14] = b"\tqwertyuiop[]\n";
 // Scancodes range 0x1E ... 0x28

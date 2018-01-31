@@ -3,6 +3,7 @@
 // output to screen via vga.c
 
 extern crate spin;
+extern crate vga;
 
 use spin::Mutex;
 
@@ -42,7 +43,11 @@ impl TTY_Buf {
     fn read(&mut self) {
         for i in self.nread..self.nwrite {
             let ch = self.buf[i as usize];
-            kprint!("{}", ch);
+            match ch {
+                // backspace
+                '\x08' => vga::clear_left_once(),
+                _ => kprint!("{}", ch),
+            }
         }
         self.nread = self.nwrite;
     }
