@@ -8,8 +8,6 @@
 extern crate bitflags;
 extern crate spin;
 
-#[macro_use]
-extern crate vga;
 extern crate device;
 
 #[macro_use]
@@ -22,8 +20,7 @@ use core::intrinsics;
 
 use idt::IdtEntry;
 use dtables::DescriptorTablePointer;
-use device::pic;
-use device::keyboard;
+use device::{pic, tty, keyboard};
 
 // The Interrupt Descriptor Table
 // The CPU will look at this table to find the appropriate interrupt handler.
@@ -43,7 +40,7 @@ pub fn init() {
 
     interrupt!(isr33, {
         if let Some(c) = keyboard::read_char() {
-            kprint!("{}", c);
+            tty::TTY_BUF.lock().input(c);
         }
         pic::send_eoi(33);
     });

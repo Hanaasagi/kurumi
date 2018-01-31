@@ -7,8 +7,5 @@ authors = ["Hanaasagi <ambiguous404@gmail.com>"]
 spin = "0.4.6"
 bitflags = "1"
 
-[dependencies.vga]
-path = "../vga"
-
 [dependencies.device]
 path = "../device"

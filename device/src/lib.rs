@@ -5,6 +5,10 @@
 pub mod io;
 pub mod pic;
 pub mod keyboard;
+pub mod tty;
+
+#[macro_use]
+extern crate vga;
 
 #[macro_use]
 extern crate bitflags;
