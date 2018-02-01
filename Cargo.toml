@@ -25,3 +25,6 @@ path = "vga"
 
 [dependencies.device]
 path = "device"
+
+[dependencies.memory]
+path = "memory"

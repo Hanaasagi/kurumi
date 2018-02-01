@@ -6,6 +6,7 @@
 extern crate vga;
 extern crate interrupt;
 extern crate device;
+extern crate memory;
 extern crate rlibc;
 extern crate multiboot2;
 
@@ -26,6 +27,7 @@ pub extern fn kmain(multiboot_info_addr: usize) -> ! {
 
     show_sys_info(multiboot_info_addr);
 
+
     kprint!("$ ");
     loop {}
 }
@@ -38,7 +40,7 @@ fn show_sys_info(multiboot_info_addr: usize) {
 
     kprintln!("memory areas:");
     for area in memory_map_tag.memory_areas() {
-        kprintln!("    start: 0x{:x}, length: 0x{:x}",
+        kprintln!("    start: 0x{:08x}, length: 0x{:08x}",
                   area.base_addr, area.length);
     }
 
@@ -47,7 +49,7 @@ fn show_sys_info(multiboot_info_addr: usize) {
 
     kprintln!("kernel sections:");
     for section in elf_sections_tag.sections() {
-        kprintln!("    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
+        kprintln!("    addr: 0x{:08x}, size: 0x{:08x}, flags: 0x{:08x}",
                   section.addr, section.size, section.flags);
     }
 
@@ -59,10 +61,17 @@ fn show_sys_info(multiboot_info_addr: usize) {
     let multiboot_start = multiboot_info_addr;
     let multiboot_end = multiboot_start + (boot_info.total_size as usize);
 
-    kprintln!("kernel starts at 0x{:x}, ends at 0x{:x}",
+    kprintln!("kernel starts at 0x{:08x}, ends at 0x{:08x}",
               kernel_start, kernel_end);
-    kprintln!("multiboot starts at 0x{:x}, ends at 0x{:x}",
+    kprintln!("multiboot starts at 0x{:08x}, ends at 0x{:08x}",
               multiboot_start, multiboot_end);
+
+    let mut frame_allocator = memory::BumpAllocator::new(
+        kernel_start as usize, kernel_end as usize, multiboot_start,
+        multiboot_end, memory_map_tag.memory_areas());
+    use memory::frame::FrameAllocator;
+    kprintln!("{:?}", frame_allocator.alloc().unwrap());
+    kprintln!("{:?}", frame_allocator.alloc().unwrap());
 
     for _ in 0..80 { kprint!("="); }
 }
