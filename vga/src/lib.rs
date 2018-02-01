@@ -152,6 +152,9 @@ pub fn kprint(args: fmt::Arguments) {
 
 pub fn clear_left_once() {
     let mut writer = WRITER.lock();
+    if writer.column_position <= 0 {
+        return
+    }
     writer.column_position -= 1;
     // can't use kprint here
     // otherwist cause deadlock

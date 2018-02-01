@@ -8,8 +8,8 @@ use spin::Mutex;
 const ASCII_PART_1: &'static [u8; 14] = b"\x1B1234567890-=\x08";
 // Scancodes range 0x0F ... 0x1C
 const ASCII_PART_2: &'static [u8; 14] = b"\tqwertyuiop[]\n";
-// Scancodes range 0x1E ... 0x28
-const ASCII_PART_3: &'static [u8; 11] = b"asdfghjkl;'";
+// Scancodes range 0x1E ... 0x29
+const ASCII_PART_3: &'static [u8; 12] = b"asdfghjkl;'`";
 // Scancodes range 0x2C ... 0x35
 const ASCII_PART_4: &'static [u8; 10] = b"zxcvbnm,./";
 
@@ -23,8 +23,9 @@ impl Scancode {
         match code {
             0x01 ... 0x0e => Some(ASCII_PART_1[code - 0x01]),
             0x0f ... 0x1c => Some(ASCII_PART_2[code - 0x0f]),
-            0x1e ... 0x28 => Some(ASCII_PART_3[code - 0x1e]),
+            0x1e ... 0x29 => Some(ASCII_PART_3[code - 0x1e]),
             0x2c ... 0x35 => Some(ASCII_PART_4[code - 0x2c]),
+            0x2b          => Some(b'\\'),
             0x39          => Some(b' '), // SPACE
             _             => None,
         }
