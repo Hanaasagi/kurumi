@@ -1,6 +1,7 @@
 // some code was from http://os.phil-opp.com/allocating-frames.html
 #![no_std]
 #![feature(const_fn)]
+#![feature(ptr_internals)]
 
 #[macro_use]
 extern crate bitflags;

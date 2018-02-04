@@ -2,10 +2,6 @@ use super::{Frame, PAGE_SIZE};
 
 pub const ENTRY_COUNT: usize = 512;
 
-pub struct Page {
-   number: usize,
-}
-
 pub struct Entry(u64);
 
 bitflags! {
