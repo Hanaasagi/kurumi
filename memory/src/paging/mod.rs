@@ -1,17 +1,19 @@
-use super::frame::{Frame, PAGE_SIZE};
-use super::frame::FrameAllocator;
-use super::{PhysicalAddress, VirtualAddress};
+pub use self::entry::*;
+use super::{PAGE_SIZE, Frame, FrameAllocator};
+use self::temporary_page::TemporaryPage;
+pub use self::mapper::Mapper;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
 
-pub mod entry;
-pub mod table;
-pub mod mapper;
-pub mod temporary_page;
+mod entry;
+mod table;
+mod temporary_page;
+mod mapper;
 
-use self::entry::EntryFlags;
-use self::temporary_page::TemporaryPage;
-use self::mapper::Mapper;
+const ENTRY_COUNT: usize = 512;
+
+pub type PhysicalAddress = usize;
+pub type VirtualAddress = usize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
@@ -101,42 +103,51 @@ impl DerefMut for ActivePageTable {
 
 impl ActivePageTable {
     unsafe fn new() -> ActivePageTable {
-        ActivePageTable {
-            mapper: Mapper::new()
-        }
+        ActivePageTable { mapper: Mapper::new() }
     }
 
-    pub fn with<F>(&mut self, table: &mut InactivePageTable,
-                   temporary_page: &mut temporary_page::TemporaryPage,
-                   f: F) where F: FnOnce(&mut Mapper) {
+    pub fn with<F>(
+        &mut self,
+        table: &mut InactivePageTable,
+        temporary_page: &mut temporary_page::TemporaryPage, // new
+        f: F,
+    ) where
+        F: FnOnce(&mut Mapper),
+    {
+        use x86_64::registers::control_regs;
+        use x86_64::instructions::tlb;
+
         {
-            let cr3_val = cr3();
-            let backup = Frame::containing_address(cr3_val as usize);
+            let backup = Frame::containing_address(control_regs::cr3().0 as usize);
 
             // map temporary_page to current p4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
 
             // overwrite recursive mapping
-            self.p4_mut()[511].set(table.p4_frame.clone(),
-                entry::EntryFlags::PRESENT | entry::EntryFlags::WRITABLE);
-            reload_cr3();
+            self.p4_mut()[511].set(table.p4_frame.clone(), PRESENT | WRITABLE);
+            tlb::flush_all();
 
             // execute f in the new context
             f(self);
 
             // restore recursive mapping to original p4 table
-            p4_table[511].set(backup,
-                entry::EntryFlags::PRESENT | entry::EntryFlags::WRITABLE);
-            reload_cr3();
+            p4_table[511].set(backup, PRESENT | WRITABLE);
+            tlb::flush_all();
         }
+
         temporary_page.unmap(self);
     }
 
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
+        use x86_64::PhysicalAddress;
+        use x86_64::registers::control_regs;
+
         let old_table = InactivePageTable {
-            p4_frame: Frame::containing_address(cr3() as usize),
+            p4_frame: Frame::containing_address(control_regs::cr3().0 as usize),
         };
-        unsafe { cr3_write(new_table.p4_frame.start_address() as u64); }
+        unsafe {
+            control_regs::cr3_write(PhysicalAddress(new_table.p4_frame.start_address() as u64));
+        }
         old_table
     }
 }
@@ -146,12 +157,15 @@ pub struct InactivePageTable {
 }
 
 impl InactivePageTable {
-    pub fn new(frame: Frame, active_table: &mut ActivePageTable,
-               temporary_page: &mut TemporaryPage) -> InactivePageTable {
+    pub fn new(
+        frame: Frame,
+        active_table: &mut ActivePageTable,
+        temporary_page: &mut TemporaryPage,
+    ) -> InactivePageTable {
         {
             let table = temporary_page.map_table_frame(frame.clone(), active_table);
             table.zero();
-            table[511].set(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
+            table[511].set(frame.clone(), PRESENT | WRITABLE);
         }
         temporary_page.unmap(active_table);
 
@@ -159,13 +173,15 @@ impl InactivePageTable {
     }
 }
 
-pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation)
-    -> ActivePageTable where A: FrameAllocator {
+pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
+where
+    A: FrameAllocator,
+{
     let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe }, allocator);
 
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {
-        let frame = allocator.alloc().expect("no more frames");
+        let frame = allocator.allocate_frame().expect("no more frames");
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
 
@@ -202,13 +218,13 @@ pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation)
 
         // identity map the VGA text buffer
         let vga_buffer_frame = Frame::containing_address(0xb8000);
-        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
+        mapper.identity_map(vga_buffer_frame, WRITABLE, allocator);
 
         // identity map the multiboot info structure
         let multiboot_start = Frame::containing_address(boot_info.start_address());
         let multiboot_end = Frame::containing_address(boot_info.end_address() - 1);
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
-            mapper.identity_map(frame, EntryFlags::PRESENT, allocator);
+            mapper.identity_map(frame, PRESENT, allocator);
         }
     });
 
@@ -220,18 +236,4 @@ pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation)
     kprintln!("guard page at {:#x}", old_p4_page.start_address());
 
     active_table
-}
-
-fn cr3() -> u64 {
-    let ret: u64;
-    unsafe {asm!("mov %cr3, $0" : "=r" (ret));}
-    ret
-}
-
-unsafe fn cr3_write(val: u64) {
-    asm!("mov $0, %cr3" :: "r" (val) : "memory");
-}
-
-fn reload_cr3() {
-    unsafe { cr3_write(cr3()) }
 }

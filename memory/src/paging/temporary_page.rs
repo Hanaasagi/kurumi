@@ -8,8 +8,8 @@ pub struct TemporaryPage {
 }
 
 impl TemporaryPage {
-    pub fn new<A>(page: Page, allocator: &mut A) -> TemporaryPage
-        where A: FrameAllocator {
+    pub fn new<A>(page: Page, allocator: &mut A)
+        -> TemporaryPage where A: FrameAllocator {
         TemporaryPage {
             page: page,
             allocator: TinyAllocator::new(allocator),
@@ -18,26 +18,25 @@ impl TemporaryPage {
 
     // Maps the temporary page to the given frame in the active table.
     // Returns the start address of the temporary page.
-    pub fn map(&mut self, frame: Frame, active_table: &mut ActivePageTable)
-        -> VirtualAddress {
-        use super::entry::EntryFlags;
+    pub fn map(&mut self, frame: Frame, active_table: &mut ActivePageTable) -> VirtualAddress {
+        use super::entry::WRITABLE;
 
         assert!(
             active_table.translate_page(self.page).is_none(),
             "temporary page is already mapped"
         );
-
-        active_table.map_to(self.page, frame, EntryFlags::WRITABLE, &mut self.allocator);
+        active_table.map_to(self.page, frame, WRITABLE, &mut self.allocator);
         self.page.start_address()
     }
 
     // Maps the temporary page to the given page table frame in the active table.
     // Returns a reference to the now mapped table.
-    pub fn map_table_frame(&mut self, frame:Frame, active_table: &mut ActivePageTable)
-        -> &mut Table<Level1> {
-            unsafe {
-                &mut *(self.map(frame, active_table) as *mut Table<Level1>)
-            }
+    pub fn map_table_frame(
+        &mut self,
+        frame: Frame,
+        active_table: &mut ActivePageTable,
+    ) -> &mut Table<Level1> {
+        unsafe { &mut *(self.map(frame, active_table) as *mut Table<Level1>) }
     }
 
     // Unmaps the temporary page in the active table.
@@ -48,25 +47,25 @@ impl TemporaryPage {
 
 struct TinyAllocator([Option<Frame>; 3]);
 
-impl TinyAllocator {
-    fn new<A>(allocator: &mut A) -> TinyAllocator where A: FrameAllocator {
-        let mut f = || allocator.alloc();
+impl TinyAllocator {fn new<A>(allocator: &mut A) -> TinyAllocator
+    where A: FrameAllocator {
+        let mut f = || allocator.allocate_frame();
         let frames = [f(), f(), f()];
         TinyAllocator(frames)
     }
 }
 
 impl FrameAllocator for TinyAllocator {
-    fn alloc(&mut self) -> Option<Frame> {
+    fn allocate_frame(&mut self) -> Option<Frame> {
         for frame_option in &mut self.0 {
-            if frame_option.is_none() {
+            if frame_option.is_some() {
                 return frame_option.take();
             }
         }
         None
     }
 
-    fn free(&mut self, frame: Frame) {
+    fn deallocate_frame(&mut self, frame: Frame) {
         for frame_option in &mut self.0 {
             if frame_option.is_none() {
                 *frame_option = Some(frame);
