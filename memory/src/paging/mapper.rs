@@ -50,7 +50,7 @@ impl Mapper {
     pub fn map<A>(&mut self, page: Page, flags: EntryFlags,
                   allocator: &mut A) where A: FrameAllocator {
         let frame = allocator.alloc().expect("out of memory");
-        self.map_to(page, frame, flags, allocator)
+         self.map_to(page, frame, flags, allocator)
     }
 
     pub fn identity_map<A>(&mut self, frame: Frame, flags: EntryFlags,
@@ -68,6 +68,10 @@ impl Mapper {
             .expect("mapping code does not support huge pages");
         let frame = p1[page.p1_index()].pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
-        allocator.free(frame);
+        // clear TLB(translation lookaside buffer)
+        unsafe {
+            asm!("invlpg ($0)" :: "r" (page.start_address()) : "memory")
+        };
+        //allocator.free(frame);
     }
 }

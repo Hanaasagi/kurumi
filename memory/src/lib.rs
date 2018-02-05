@@ -1,5 +1,6 @@
 // some code was from http://os.phil-opp.com/allocating-frames.html
 #![no_std]
+#![feature(asm)]
 #![feature(const_fn)]
 #![feature(ptr_internals)]
 
