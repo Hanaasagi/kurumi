@@ -1,5 +1,9 @@
-use super::{Frame, PAGE_SIZE};
+extern crate multiboot2;
 
+use super::Frame;
+use multiboot2::ElfSection;
+
+// a page table has 512 entry
 pub const ENTRY_COUNT: usize = 512;
 
 pub struct Entry(u64);
@@ -34,9 +38,9 @@ impl Entry {
 
     pub fn pointed_frame(&self) -> Option<Frame> {
         if self.flags().contains(EntryFlags::PRESENT) {
-            Some(Frame::containing_address(
-                self.0 as usize & 0x000fffff_fffff000
-            ))
+            // get 12-51 bit
+            let addr = (self.0 as usize) & 0x000fffff_fffff000;
+            Some(Frame::containing_address(addr))
         } else {
             None
         }
@@ -48,3 +52,23 @@ impl Entry {
     }
 }
 
+impl EntryFlags {
+    pub fn from_elf_section_flags(section: &ElfSection) -> EntryFlags {
+        use multiboot2::{ELF_SECTION_ALLOCATED, ELF_SECTION_WRITABLE,
+            ELF_SECTION_EXECUTABLE};
+        let mut flags = EntryFlags::empty();
+
+        if section.flags().contains(ELF_SECTION_ALLOCATED) {
+            flags = flags | EntryFlags::PRESENT;
+        }
+
+        if section.flags().contains(ELF_SECTION_WRITABLE) {
+            flags = flags | EntryFlags::WRITABLE;
+        }
+        if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
+            flags = flags | EntryFlags::NO_EXECUTE;
+        }
+
+        flags
+    }
+}
