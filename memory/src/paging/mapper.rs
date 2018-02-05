@@ -1,6 +1,5 @@
 use super::{VirtualAddress, PhysicalAddress, Page};
-use super::entry::ENTRY_COUNT;
-use super::entry::*;
+use super::entry::{ENTRY_COUNT, EntryFlags};
 use super::table::{self, Table, Level4};
 use super::{PAGE_SIZE, Frame, FrameAllocator};
 use core::ptr::Unique;
@@ -24,7 +23,8 @@ impl Mapper {
         unsafe { self.p4.as_mut() }
     }
 
-    pub fn translate(&self, virtual_address: VirtualAddress) -> Option<PhysicalAddress> {
+    pub fn translate(&self, virtual_address: VirtualAddress)
+        -> Option<PhysicalAddress> {
         let offset = virtual_address % PAGE_SIZE;
         self.translate_page(Page::containing_address(virtual_address))
             .map(|frame| frame.number * PAGE_SIZE + offset)
@@ -39,7 +39,8 @@ impl Mapper {
 
     pub fn map_to<A>(&mut self, page: Page, frame: Frame,
                      flags: EntryFlags, allocator: &mut A) where A: FrameAllocator {
-        let mut p3 = self.p4_mut().next_table_create(page.p4_index(), allocator);
+        let p4 = self.p4_mut();
+        let mut p3 = p4.next_table_create(page.p4_index(), allocator);
         let mut p2 = p3.next_table_create(page.p3_index(), allocator);
         let mut p1 = p2.next_table_create(page.p2_index(), allocator);
 
@@ -50,7 +51,7 @@ impl Mapper {
     pub fn map<A>(&mut self, page: Page, flags: EntryFlags,
                   allocator: &mut A) where A: FrameAllocator {
         let frame = allocator.alloc().expect("out of memory");
-         self.map_to(page, frame, flags, allocator)
+        self.map_to(page, frame, flags, allocator)
     }
 
     pub fn identity_map<A>(&mut self, frame: Frame, flags: EntryFlags,

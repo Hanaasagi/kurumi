@@ -1,7 +1,7 @@
+use super::FrameAllocator;
+use super::entry::{Entry, ENTRY_COUNT, EntryFlags};
 use core::marker::PhantomData;
 use core::ops::{Index, IndexMut};
-use super::FrameAllocator;
-use super::entry::*;
 
 pub const P4: *mut Table<Level4> = 0xffffffff_fffff000 as *mut _;
 
@@ -65,7 +65,7 @@ impl<L> Table<L> where L: HierarchicalLevel {
         let entry_flags = self[index].flags();
         if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE) {
             let table_address = self as *const _ as usize;
-            Some((table_address << 9) | (index << 12))
+            Some(make_address_canonical((table_address << 9) | (index << 12)))
         } else {
             None
         }
@@ -95,3 +95,12 @@ impl<L> Table<L> where L: HierarchicalLevel {
     }
 }
 
+
+/*
+ * Addresses are expected to be canonical (bits 48-63 must be the same as bit 47), otherwise the
+ * CPU will #GP when we ask it to translate it.
+ */
+fn make_address_canonical(address : usize) -> usize {
+    let sign_extension = 0o177777_000_000_000_000_0000 * ((address >> 47) & 0b1);
+    (address & ((1 << 48) - 1)) | sign_extension
+}
