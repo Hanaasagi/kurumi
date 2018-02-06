@@ -1,16 +1,30 @@
 #![no_std]
 #![feature(asm)]
+#![feature(alloc)]
 #![feature(lang_items)]
+#![feature(global_allocator)]
 
 #[macro_use]
 extern crate vga;
 extern crate interrupt;
 extern crate device;
 extern crate memory;
+
+#[macro_use]
+extern crate alloc; /* format */
 extern crate rlibc;
 extern crate multiboot2;
+extern crate linked_list_allocator;
+extern crate x86_64;
 
 use device::pic;
+use linked_list_allocator::LockedHeap;
+
+const HEAP_START: usize = 0o_000_001_000_000_0000;
+const HEAP_SIZE:  usize = 100 * 1024; // 100 KiB
+
+#[global_allocator]
+static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 #[no_mangle]
 pub extern fn kmain(multiboot_info_addr: usize) -> ! {
@@ -25,13 +39,39 @@ pub extern fn kmain(multiboot_info_addr: usize) -> ! {
 |_|\_\\__,_|_|   \__,_|_| |_| |_|_|
     ");
 
-    show_sys_info(multiboot_info_addr);
+    //show_sys_info(multiboot_info_addr);
 
+    enable_nxe_bit();
+    enable_write_protect_bit();
+
+    let boot_info = unsafe{ multiboot2::load(multiboot_info_addr) };
+    memory::init(boot_info, HEAP_START, HEAP_SIZE);
+    unsafe { HEAP_ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE); }
+    for _ in 0..10000 {
+        format!("Some String");
+    }
 
     kprint!("$ ");
     loop {}
 }
 
+fn enable_nxe_bit() {
+    use x86_64::registers::msr::{IA32_EFER, rdmsr, wrmsr};
+
+    let nxe_bit = 1 << 11;
+    unsafe {
+        let efer = rdmsr(IA32_EFER);
+        wrmsr(IA32_EFER, efer | nxe_bit);
+    }
+}
+
+fn enable_write_protect_bit() {
+    use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
+
+    unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
+}
+
+#[allow(dead_code)]
 fn show_sys_info(multiboot_info_addr: usize) {
     for _ in 0..80 { kprint!("="); }
     let boot_info = unsafe{ multiboot2::load(multiboot_info_addr) };
@@ -66,12 +106,12 @@ fn show_sys_info(multiboot_info_addr: usize) {
     kprintln!("multiboot starts at 0x{:08x}, ends at 0x{:08x}",
               multiboot_start, multiboot_end);
 
-    let mut frame_allocator = memory::BumpAllocator::new(
+    let mut frame_allocator = memory::AreaFrameAllocator::new(
         kernel_start as usize, kernel_end as usize, multiboot_start,
         multiboot_end, memory_map_tag.memory_areas());
     use memory::frame::FrameAllocator;
-    kprintln!("{:?}", frame_allocator.alloc().unwrap());
-    kprintln!("{:?}", frame_allocator.alloc().unwrap());
+    kprintln!("{:?}", frame_allocator.allocate_frame().unwrap());
+    kprintln!("{:?}", frame_allocator.allocate_frame().unwrap());
 
     for _ in 0..80 { kprint!("="); }
 }

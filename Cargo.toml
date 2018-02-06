@@ -16,6 +16,8 @@ panic = "abort"
 [dependencies]
 rlibc = "1.0"
 multiboot2 = "0.3.2"
+linked_list_allocator = "0.5"
+x86_64 = "0.1.2"
 
 [dependencies.interrupt]
 path = "interrupt"

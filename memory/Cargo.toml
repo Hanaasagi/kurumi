@@ -4,5 +4,9 @@ version = "0.1.0"
 authors = ["Hanaasagi <ambiguous404@gmail.com>"]
 
 [dependencies]
+bitflags = "0.9.1"
+x86_64 = "0.1.2"
 multiboot2 = "0.3.2"
-bitflags = "1.0"
+
+[dependencies.vga]
+path = "../vga"
