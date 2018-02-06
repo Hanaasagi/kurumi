@@ -37,7 +37,7 @@ pub struct Ata {}
 
 impl Ata {
 
-    unsafe fn poll<F>(&self, condition: F) -> u8 where F: Fn(u8) -> bool {
+    unsafe fn poll<F>(condition: F) -> u8 where F: Fn(u8) -> bool {
         let mut reg_value: u8;
         loop {
             reg_value = inb(ATA_Bus::status.bits);
@@ -57,7 +57,7 @@ impl Ata {
     // Wait for an IRQ or poll.
     // Transfer 256 16-bit values, a uint16_t at a time, into your buffer from I/O port 0x1F0. (In assembler, REP INSW works well for this.)
     // Then loop back to waiting for the next IRQ (or poll again -- see next note) for each successive sector.
-    unsafe fn read(&self, block: u64, buffer: &mut [u8]) -> Result<u8, &str> {
+    unsafe fn read(block: u64, buffer: &mut [u8]) -> Result<u8, &str> {
         // check
         if buffer.len() == 0 {
             return Err("Size of buffer can't be 0.");
@@ -78,7 +78,7 @@ impl Ata {
 
         for sector in 0..sector_count {
             // poll
-            let status = self.poll(
+            let status = Self::poll(
                 |x| (x & 0x80 == 0 && x & 0x8 != 0) || x & 0x1 != 0 || x & 0x20 != 0
             );
 
