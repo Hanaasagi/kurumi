@@ -1,15 +1,16 @@
+use alloc::string::String;
 // follow https://wiki.osdev.org/FAT#Directories
 
 bitflags! {
     pub struct FileAttributes: u8 {
-        const ReadOnly  = 0x01,
-        const Hidden    = 0x02,
-        const System    = 0x04,
-        const VolumeId  = 0x08,
-        const Directory = 0x10,
-        const Archive   = 0x20,
-        const LongFileName= Self::ReadOnly |
-            Self::Hidden | Self::System | Self::VolumeId,
+        const ReadOnly  = 0x01;
+        const Hidden    = 0x02;
+        const System    = 0x04;
+        const VolumeId  = 0x08;
+        const Directory = 0x10;
+        const Archive   = 0x20;
+        const LongFileName= Self::ReadOnly.bits |
+            Self::Hidden.bits | Self::System.bits | Self::VolumeId.bits;
     }
 }
 
