@@ -16,3 +16,10 @@ pub unsafe fn inb(port: u16) -> u8 {
 pub unsafe fn io_wait() {
     asm!("jmp 1f;1:jmp 2f;2:" :::: "volatile");
 }
+
+// Read 16 bits from port
+pub unsafe fn inw(port: u16) -> u16 {
+    let ret: u16;
+    asm!("inw %dx, %ax" : "={ax}"(ret) : "{dx}"(port) :: "volatile");
+    ret
+}

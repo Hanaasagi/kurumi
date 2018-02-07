@@ -45,9 +45,14 @@ pub fn init() {
         pic::send_eoi(33);
     });
 
+    interrupt!(isr46, {
+        pic::send_eoi(46);
+    });
+
     // IDT Table
     IDT.lock()[32].set_func(isr32);
     IDT.lock()[33].set_func(isr33);
+    IDT.lock()[46].set_func(isr46);
 
     unsafe { sti!() }
 }

@@ -30,3 +30,6 @@ path = "device"
 
 [dependencies.memory]
 path = "memory"
+
+[dependencies.filesystem]
+path = "filesystem"

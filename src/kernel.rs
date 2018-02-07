@@ -9,6 +9,7 @@ extern crate vga;
 extern crate interrupt;
 extern crate device;
 extern crate memory;
+extern crate filesystem;
 
 #[macro_use]
 extern crate alloc; /* format */
@@ -51,6 +52,7 @@ pub extern fn kmain(multiboot_info_addr: usize) -> ! {
         format!("Some String");
     }
 
+    filesystem::detect();
     kprint!("$ ");
     loop {}
 }

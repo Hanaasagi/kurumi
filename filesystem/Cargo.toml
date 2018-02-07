@@ -4,3 +4,9 @@ version = "0.1.0"
 authors = ["Hanaasagi <ambiguous404@gmail.com>"]
 
 [dependencies]
+
+[dependencies.device]
+path = "../device"
+
+[dependencies.vga]
+path = "../vga"

@@ -1,6 +1,7 @@
 // follow https://wiki.osdev.org/ATA_PIO_Mode
 use core::slice;
 use io::{inb, outb, inw};
+use disk::Disk;
 
 // An ATA bus typically has 9 I/O ports that control its behavior.
 // For the primary bus, these I/O ports are 0x1F0 through 0x1F7, and 0x3F6.
@@ -36,8 +37,7 @@ const READ_SECTORS: u8 = 0x20;
 pub struct Ata {}
 
 impl Ata {
-
-    unsafe fn poll<F>(condition: F) -> u8 where F: Fn(u8) -> bool {
+    unsafe fn poll<F>(&self, condition: F) -> u8 where F: Fn(u8) -> bool {
         let mut reg_value: u8;
         loop {
             reg_value = inb(ATA_Bus::status.bits);
@@ -46,7 +46,9 @@ impl Ata {
             }
         }
     }
+}
 
+impl Disk for Ata{
     // Send 0xE0 for the "master" or 0xF0 for the "slave", ORed with the highest 4 bits of the LBA to port 0x1F6: outb(0x1F6, 0xE0 | (slavebit << 4) | ((LBA >> 24) & 0x0F))
     // Send a NULL byte to port 0x1F1, if you like (it is ignored and wastes lots of CPU time): outb(0x1F1, 0x00)
     // Send the sectorcount to port 0x1F2: outb(0x1F2, (unsigned char) count)
@@ -57,7 +59,7 @@ impl Ata {
     // Wait for an IRQ or poll.
     // Transfer 256 16-bit values, a uint16_t at a time, into your buffer from I/O port 0x1F0. (In assembler, REP INSW works well for this.)
     // Then loop back to waiting for the next IRQ (or poll again -- see next note) for each successive sector.
-    unsafe fn read(block: u64, buffer: &mut [u8]) -> Result<u8, &str> {
+    unsafe fn read(&self, block: u64, buffer: &mut [u8]) -> Result<u8, &str> {
         // check
         if buffer.len() == 0 {
             return Err("Size of buffer can't be 0.");
@@ -78,7 +80,7 @@ impl Ata {
 
         for sector in 0..sector_count {
             // poll
-            let status = Self::poll(
+            let status = self.poll(
                 |x| (x & 0x80 == 0 && x & 0x8 != 0) || x & 0x1 != 0 || x & 0x20 != 0
             );
 
@@ -112,3 +114,5 @@ impl Ata {
         unimplemented!();
     }
 }
+
+pub const ata: Ata = Ata{};
