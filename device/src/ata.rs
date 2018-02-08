@@ -70,12 +70,12 @@ impl Disk for Ata{
         }
 
         let sector_count = (buffer.len() / 512) as u8;
-        let command: u8 = 0xE0 | ((block >> 24) & 0x0F) as u8 | (0x40) as u8; // bit 6 enabled for 28 bit LBA mode.
+        let command: u8 = 0xE0_u8 | ((block >> 24) & 0x0F) as u8 | (0x40) as u8; // bit 6 enabled for 28 bit LBA mode.
         outb(ATA_Bus::drive.bits, command);
         outb(ATA_Bus::sector_count.bits, sector_count) ;
         outb(ATA_Bus::lba_low.bits, block as u8);
         outb(ATA_Bus::lba_mid.bits, (block >> 8)  as u8);
-        outb(ATA_Bus::lba_low.bits, (block >> 16) as u8);
+        outb(ATA_Bus::lba_high.bits, (block >> 16) as u8);
         outb(ATA_Bus::command.bits, READ_SECTORS);
 
         for sector in 0..sector_count {
