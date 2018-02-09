@@ -1,16 +1,17 @@
-use alloc::string::String;
 // follow https://wiki.osdev.org/FAT#Directories
+use super::super::File;
+use alloc::string::String;
 
 bitflags! {
     pub struct FileAttributes: u8 {
-        const ReadOnly  = 0x01;
-        const Hidden    = 0x02;
-        const System    = 0x04;
-        const VolumeId  = 0x08;
-        const Directory = 0x10;
-        const Archive   = 0x20;
-        const LongFileName= Self::ReadOnly.bits |
-            Self::Hidden.bits | Self::System.bits | Self::VolumeId.bits;
+        const READONLY     = 0x01;
+        const HIDDEN       = 0x02;
+        const SYSTEM       = 0x04;
+        const VOLUMEID     = 0x08;
+        const DIRECTORY    = 0x10;
+        const ARCHIVE      = 0x20;
+        const LONGFILENAME = Self::READONLY.bits |
+            Self::HIDDEN.bits | Self::SYSTEM.bits | Self::VOLUMEID.bits;
     }
 }
 
@@ -31,11 +32,12 @@ impl LongFileName {
     pub fn get_name(&self) -> String {
         // long file name total 13 bytes
         let mut buff = vec![0u16; 13];
+
         buff[..5].clone_from_slice(&self.name_first);
         buff[5..11].clone_from_slice(&self.name_middle);
         buff[11..].clone_from_slice(&self.name_final);
 
-        let mut last_index = buff.len();
+        let last_index = buff.len();
         use alloc::string::ToString;
         String::from_utf16_lossy(&buff[..last_index])
     }
@@ -45,7 +47,7 @@ impl LongFileName {
 #[repr(packed, C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FatDirectory {
-    name:                  [u8; 11],
+    pub name:                  [u8; 11],
     attributes:            u8,
     reserved_nt:           u8,  // Reserved for use by Windows NT.
     creation_time_precise: u8,  // Creation time in tenths of a second
@@ -72,11 +74,16 @@ impl FatDirectory {
 
     // is long file name
     pub fn is_lfn(&self) -> bool {
-        self.attributes as u8 == FileAttributes::LongFileName.bits
+        self.attributes as u8 == FileAttributes::LONGFILENAME.bits
+    }
+
+    pub fn is_folder(&self) -> bool {
+        let flag = FileAttributes::from_bits_truncate(self.attributes);
+        flag.contains(FileAttributes::DIRECTORY)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Directory {
     name: String,
     fat_directory: FatDirectory,
@@ -88,6 +95,10 @@ impl Directory {
             name: name,
             fat_directory: directory,
         }
+    }
+
+    pub fn get_fat_dir(&self) -> &FatDirectory {
+        &self.fat_directory
     }
 
     pub fn is_lfn(&self) -> bool {
@@ -103,8 +114,19 @@ impl Directory {
         self.fat_directory.get_cluster()
     }
 
-    pub fn is_folder(&self) -> bool {
-        let flag = FileAttributes::from_bits_truncate(self.fat_directory.attributes);
-        flag.contains(FileAttributes::Directory)
+    //pub fn is_folder(&self) -> bool {
+        //let flag = FileAttributes::from_bits_truncate(self.fat_directory.attributes);
+        //flag.contains(FileAttributes::Directory)
+    //}
+}
+
+impl File for Directory {
+    fn get_name(&self) -> String {
+        use alloc::string::ToString;
+        return self.name.to_string();
+    }
+
+    fn get_size(&self) -> usize {
+        self.fat_directory.file_size as usize
     }
 }
