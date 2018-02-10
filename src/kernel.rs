@@ -52,7 +52,7 @@ pub extern fn kmain(multiboot_info_addr: usize) -> ! {
         format!("Some String");
     }
 
-    filesystem::detect();
+    filesystem::test_read();
     kprint!("$ ");
     loop {}
 }

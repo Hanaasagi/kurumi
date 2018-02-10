@@ -7,6 +7,7 @@ pub trait File {
     fn get_size(&self) -> usize;
 }
 
+#[allow(dead_code)]
 pub enum FileMode {
     Read,
     Write,

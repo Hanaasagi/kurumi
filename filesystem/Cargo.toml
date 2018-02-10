@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Hanaasagi <ambiguous404@gmail.com>"]
 
 [dependencies]
+bitflags = "1"
 
 [dependencies.device]
 path = "../device"

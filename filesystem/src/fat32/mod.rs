@@ -40,7 +40,7 @@ impl Fat32 {
         self.ebpb.bpb.sectors_per_fat as u32
     }
 
-    // should be zero in FAT32
+    // always be zero in FAT32
     #[inline]
     fn get_root_dir_sector(&self) -> u32 {
         //((self.ebpb.bpb.root_entry_count * 32) + (self.ebpb.bpb.bytes_per_sector - 1)) / self.ebpb.bpb.bytes_per_sector
@@ -100,7 +100,7 @@ impl Fat32 {
             slice::from_raw_parts(buffer.as_ptr() as *const FatDirectory,
             (sectors_read * self.ebpb.bpb.bytes_per_sector as usize / 32) as usize)
         };
-        kprintln!("len {:?}", directories_slice.len());
+        //kprintln!("len {:?}", directories_slice.len());
         //kprintln!("slice {:?}", directories_slice);
 
         for directory in directories_slice {
@@ -154,8 +154,8 @@ impl Fat32 {
     fn find_file(&self, drive: &Disk, cluster: u32, path: &mut Split<&str>) -> Option<Directory> {
         if let Some(part) = path.next() {
             let current_dirs = self.read_folder(drive, cluster);
-            kprintln!("current_dirs: {:?}", current_dirs);
-            kprintln!("path part : {:?}", part);
+            //kprintln!("current_dirs: {:?}", current_dirs);
+            //kprintln!("path part : {:?}", part);
             let dir: Directory = current_dirs
                     .iter()
                     .find(|dir| dir.get_name() == part)
