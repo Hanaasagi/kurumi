@@ -13,8 +13,8 @@ kurumi is a toy os implemented in Rust. It is an experimental project.
 - [ ] tty
 - [ ] context
 - [ ] system call
-- [ ] memory
-- [ ] file system
+- [X] memory(follow blog_os)
+- [X] file system(FAT32)
 - [ ] console
 - [ ] process
 
