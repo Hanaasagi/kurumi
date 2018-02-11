@@ -6,21 +6,13 @@ IMG="disk.img" # image name
 SIZE=64        # image size
 SOURCE="test"  # source dir
 
+LOGICAL_SECTOR_SIZE=512
+OFFSET=0
+
 if [ -e "$IMG" ]; then
   echo "ERROR: $IMG already exists."
   exit 1
 fi
-
-SECTOR_SIZE=512
-LOGICAL_SECTOR_SIZE=512
-NEW_DISKLABEL=o
-NEW_PARTITION=n
-PRIMARY=p
-FIRST=1
-OFFSET_8MB=16384
-SET_PARTITION_TYPE=t
-WIN95_FAT32=b
-WRITE=w
 
 relpath() {
   full=$1
@@ -32,39 +24,26 @@ relpath() {
   fi
 }
 
-DISK_SIZE=$(echo $(expr 8 + $SIZE))
-PARTITION=${IMG}.partition
+# generate source dir
+(mkdir $SOURCE && cd "$_" && \
+    echo "Hello World" >> README && \
+    mkdir program && cd "$_" && \
+    echo "I love Rust" >> rust.txt)
 
-# make image file
-fallocate -l ${DISK_SIZE}M "$IMG"
-echo "$NEW_DISKLABEL
-$NEW_PARTITION
-$PRIMARY
-$FIRST
-$OFFSET_8MB
-
-$SET_PARTITION_TYPE
-$WIN95_FAT32
-$WRITE
-" | /sbin/fdisk "$IMG" >/dev/null
-
-# make partition
-fallocate -l ${SIZE}M "$PARTITION"
-/sbin/mkfs.fat -F32 -S"$LOGICAL_SECTOR_SIZE" "$PARTITION" >/dev/null
+# make img
+fallocate -l ${SIZE}M "$IMG"
+/sbin/mkfs.fat -F32 -S"$LOGICAL_SECTOR_SIZE" "$IMG" >/dev/null
 
 # copy file
 find "$SOURCE" -type d | while read dir; do
   target=$(relpath $dir)
   [ -z "$target" ] && continue
-  mmd -i "$PARTITION" "::$target"
+  mmd -i "$IMG" "::$target"
 done
 find $SOURCE -type f | while read file; do
   target=$(relpath $file)
-  mcopy -i "$PARTITION" "$file" "::$target"
+  mcopy -i "$IMG" "$file" "::$target"
 done
 
-# insert partition
-dd if="$PARTITION" of="$IMG" bs=$SECTOR_SIZE seek=$OFFSET_8MB >/dev/null 2>&1
-
 # clean
-rm -f "$PARTITION"
+rm -rf $SOURCE

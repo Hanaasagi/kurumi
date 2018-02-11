@@ -84,7 +84,7 @@ impl <'a, T: FileSystem>  FsManager<'a, T> {
 
 pub fn test_read() {
     let fat32 = unsafe { fat32::Fat32::new(&ata) };
-    //kprintln!("{:?}", fat32.ebpb);
+    kprintln!("{:?}", fat32.ebpb);
     let mut fat = FsManager {
         filesystem: &fat32,
         drive: &ata,

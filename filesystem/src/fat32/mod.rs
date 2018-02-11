@@ -76,7 +76,7 @@ impl Fat32 {
         let mut buffer = vec![0u8; self.get_bytes_in_cluster() as usize];
 
         let sector = self.first_sector_of_cluster(cluster);
-        //kprintln!("sector {:?}", sector);
+        kprintln!("sector {:?}", sector);
         let sectors_read = unsafe {
             drive.read(sector, &mut buffer)
         }.expect("Disk Read Error") as usize;
@@ -100,7 +100,7 @@ impl Fat32 {
             slice::from_raw_parts(buffer.as_ptr() as *const FatDirectory,
             (sectors_read * self.ebpb.bpb.bytes_per_sector as usize / 32) as usize)
         };
-        //kprintln!("len {:?}", directories_slice.len());
+        kprintln!("len {:?}", directories_slice.len());
         //kprintln!("slice {:?}", directories_slice);
 
         for directory in directories_slice {
