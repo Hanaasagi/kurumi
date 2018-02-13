@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(const_fn)]
 #![feature(alloc)]
+#![allow(safe_packed_borrows)]
 
 #[macro_use]
 extern crate vga;
@@ -15,7 +16,7 @@ mod fat32;
 mod file;
 
 use alloc::Vec;
-use device::ata::ata;
+use device::ata::ATA;
 use device::disk::Disk;
 use file::{File, FileMode, FilePointer, FileDescriptor};
 
@@ -83,11 +84,11 @@ impl <'a, T: FileSystem>  FsManager<'a, T> {
 }
 
 pub fn test_read() {
-    let fat32 = unsafe { fat32::Fat32::new(&ata) };
+    let fat32 = unsafe { fat32::Fat32::new(&ATA) };
     kprintln!("{:?}", fat32.ebpb);
     let mut fat = FsManager {
         filesystem: &fat32,
-        drive: &ata,
+        drive: &ATA,
         descriptors: Vec::new(),
     };
 

@@ -8,7 +8,7 @@ use alloc::Vec;
 use alloc::string::String;
 
 use self::directory::{Directory, LongFileName, FatDirectory};
-use self::bpb::{Bpb, Ebpb};
+use self::bpb::{Ebpb};
 use self::cluster::{Cluster, ClusterChain};
 use super::{File, FilePointer, FileSystem};
 use device::disk::Disk;
@@ -26,7 +26,7 @@ impl Fat32 {
         let mut boot_record = [0u8; 512];
         disk.read(START_SECTOR, &mut boot_record)
             .expect("EBPB Read Error");
-        let ebpb = (*(boot_record.as_ptr() as *const Ebpb));
+        let ebpb = *(boot_record.as_ptr() as *const Ebpb);
         Fat32 {
             ebpb: ebpb,
         }
@@ -191,14 +191,14 @@ impl FileSystem for Fat32 {
         if read_length % cluster_size == 0 {
             let starting_cluster = file.get_fat_dir().get_cluster();
             let mut cluster_chain = ClusterChain::new(starting_cluster, self, drive);
-            let mut current_cluster_index = read_start/cluster_size;
+            let current_cluster_index = read_start/cluster_size;
 
             if let Some(mut current_cluster) = cluster_chain.nth(current_cluster_index) {
                 let mut part = 0;
                 while (read_start + part*cluster_size < file_size) || (part*cluster_size < read_length) {
                     let mut temp_buffer = vec![0u8; cluster_size];
                     unsafe {
-                        drive.read(self.first_sector_of_cluster(current_cluster), &mut temp_buffer);
+                        let _ = drive.read(self.first_sector_of_cluster(current_cluster), &mut temp_buffer);
                     }
 
                     buffer[part*cluster_size..(part+1)*cluster_size].clone_from_slice(&temp_buffer);

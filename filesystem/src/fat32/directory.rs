@@ -38,7 +38,6 @@ impl LongFileName {
         buff[11..].clone_from_slice(&self.name_final);
 
         let last_index = buff.len();
-        use alloc::string::ToString;
         String::from_utf16_lossy(&buff[..last_index])
     }
 }
@@ -101,15 +100,12 @@ impl Directory {
         &self.fat_directory
     }
 
-    pub fn is_lfn(&self) -> bool {
-        self.fat_directory.is_lfn()
-    }
-
     pub fn get_name(&self) -> String {
         use alloc::string::ToString;
         self.name.to_string()
     }
 
+    #[allow(dead_code)]
     pub fn get_cluster(&self) -> u32 {
         self.fat_directory.get_cluster()
     }

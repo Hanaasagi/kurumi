@@ -19,16 +19,16 @@ use disk::Disk;
 // 6 	        Drive / Head Port 	                   Used to select a drive and/or head.
 // 7 	        Command port / Regular Status port 	   Used to send commands or read the current status.
 bitflags! {
-    struct ATA_Bus: u16 {
-        const data_port    = 0x1F0;
-        const error_info   = 0x1F1;
-        const sector_count = 0x1F2;
-        const lba_low      = 0x1F3;
-        const lba_mid      = 0x1F4;
-        const lba_high     = 0x1F5;
-        const drive        = 0x1F6;
-        const command      = 0x1F7;
-        const status       = 0x3F6;
+    struct AtaBus: u16 {
+        const DATA_PORT    = 0x1F0;
+        const ERROR_INFO   = 0x1F1;
+        const SECTOR_COUNT = 0x1F2;
+        const LBA_LOW      = 0x1F3;
+        const LBA_MID      = 0x1F4;
+        const LBA_HIGH     = 0x1F5;
+        const DRIVE        = 0x1F6;
+        const COMMAND      = 0x1F7;
+        const STATUS       = 0x3F6;
     }
 }
 
@@ -40,7 +40,7 @@ impl Ata {
     unsafe fn poll<F>(&self, condition: F) -> u8 where F: Fn(u8) -> bool {
         let mut reg_value: u8;
         loop {
-            reg_value = inb(ATA_Bus::status.bits);
+            reg_value = inb(AtaBus::STATUS.bits);
             if condition(reg_value) {
                 return reg_value;
             }
@@ -71,12 +71,12 @@ impl Disk for Ata{
 
         let sector_count = (buffer.len() / 512) as u8;
         let command: u8 = 0xE0_u8 | ((block >> 24) & 0x0F) as u8 | (0x40) as u8; // bit 6 enabled for 28 bit LBA mode.
-        outb(ATA_Bus::drive.bits, command);
-        outb(ATA_Bus::sector_count.bits, sector_count) ;
-        outb(ATA_Bus::lba_low.bits, block as u8);
-        outb(ATA_Bus::lba_mid.bits, (block >> 8)  as u8);
-        outb(ATA_Bus::lba_high.bits, (block >> 16) as u8);
-        outb(ATA_Bus::command.bits, READ_SECTORS);
+        outb(AtaBus::DRIVE.bits, command);
+        outb(AtaBus::SECTOR_COUNT.bits, sector_count) ;
+        outb(AtaBus::LBA_LOW.bits, block as u8);
+        outb(AtaBus::LBA_MID.bits, (block >> 8)  as u8);
+        outb(AtaBus::LBA_HIGH.bits, (block >> 16) as u8);
+        outb(AtaBus::COMMAND.bits, READ_SECTORS);
 
         for sector in 0..sector_count {
             // poll
@@ -97,22 +97,23 @@ impl Disk for Ata{
             // Read data to buffer
             let buff = slice::from_raw_parts_mut(buffer.as_mut_ptr() as *mut u16, buffer.len()/2);
             for i in 0..buff.len() {
-                buff[i+(sector as usize*256)] = inw(ATA_Bus::data_port.bits);
+                buff[i+(sector as usize*256)] = inw(AtaBus::DATA_PORT.bits);
             }
 
             // After transferring the last uint16_t of a PIO data block to the data IO port,
             // give the drive a 400ns delay to reset its DRQ bit
             for _ in 0..4 {
-                inb(ATA_Bus::status.bits);
+                inb(AtaBus::STATUS.bits);
             }
         }
         // return the amount of sectors read
         Ok(sector_count)
     }
 
+    #[allow(unused_variables)]
     unsafe fn write_at(&self, block: u64, buffer: &[u8]) -> Result<u8, &str> {
         unimplemented!();
     }
 }
 
-pub const ata: Ata = Ata{};
+pub const ATA: Ata = Ata {};

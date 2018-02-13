@@ -39,6 +39,7 @@ impl <T: File> FilePointer<T> {
     }
 }
 
+#[allow(dead_code)]
 pub struct FileDescriptor<T: File> {
     id:      u16,
     mode:    FileMode,
@@ -58,6 +59,7 @@ impl <T: File> FileDescriptor<T> {
         self.id
     }
 
+    #[allow(dead_code)]
     pub fn get_pointer(&self) -> &FilePointer<T> {
         &self.pointer
     }
