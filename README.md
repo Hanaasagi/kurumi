@@ -18,6 +18,28 @@ kurumi is a toy os implemented in Rust. It is an experimental project.
 - [ ] console
 - [ ] process
 
+### Build
+It depend on Rust nightly, Xargo, nasm, xorriso, qemu.
+
+In debian
+```
+$ apt-get install nasm \
+    binutils           \
+    grub-common        \
+    xorriso            \
+    grub-pc-bin        \
+    qemu
+$ cargo install xargo
+$ rustup component add rust-src
+```
+
+### Run
+
+```
+$ make iso
+$ make run
+```
+
 ### Reference
 [Linux内核设计与实现](https://book.douban.com/subject/6097773/)  
 [Linux内核0.11完全注释](https://github.com/loveveryday/linux0.11)  
